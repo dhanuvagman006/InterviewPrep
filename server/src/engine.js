@@ -1,10 +1,7 @@
-import Anthropic from "@anthropic-ai/sdk";
 import crypto from "crypto";
+import { geminiGenerate } from "./gemini.js";
 import db from "./db.js";
 import { ROUNDS, baseSystemPrompt, reportPrompt } from "./rounds.js";
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
 
 const getSession = db.prepare("SELECT * FROM sessions WHERE id = ?");
 const getMessages = db.prepare(
@@ -61,15 +58,12 @@ async function callInterviewer(session, history) {
   const window = history.slice(-30).map((m) => ({ role: m.role, content: m.content }));
   if (window.length === 0) {
     window.push({ role: "user", content: "(The candidate has joined the interview. Greet them and begin.)" });
+  } else if (window[0].role === "assistant") {
+    // Gemini requires the conversation to start with a user turn.
+    window.unshift({ role: "user", content: "(Earlier conversation continues below.)" });
   }
 
-  const resp = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 1500,
-    system,
-    messages: window,
-  });
-  return resp.content.filter((b) => b.type === "text").map((b) => b.text).join("\n");
+  return geminiGenerate({ system, messages: window, maxTokens: 1500 });
 }
 
 export async function handleTurn(sessionId, userMessage) {
@@ -153,12 +147,11 @@ export async function generateReport(sessionId) {
     profile: loadProfile(),
   });
 
-  const resp = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 4000,
+  const text = await geminiGenerate({
     messages: [{ role: "user", content: prompt }],
+    maxTokens: 4000,
+    json: true,
   });
-  const text = resp.content.filter((b) => b.type === "text").map((b) => b.text).join("\n");
   const clean = text.replace(/```json|```/g, "").trim();
   const report = JSON.parse(clean);
 

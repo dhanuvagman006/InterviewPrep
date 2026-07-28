@@ -22,8 +22,8 @@ Afterward you get a full committee report: overall score, per-round scores, ten 
 
 ## Stack
 
-- **Server:** Node + Express, SQLite (better-sqlite3), Anthropic API (`claude-sonnet-4-6`), PDF resume parsing.
-- **Client:** React + Vite, no UI framework — a custom "evaluation dossier" design system.
+- **Server:** Node + Express, SQLite (better-sqlite3), Google Gemini API (`gemini-2.5-flash` via REST), PDF resume parsing.
+- **Client:** React + Vite, no UI framework — a custom "evaluation dossier" design system. Voice-to-voice interviews via the browser's Web Speech API (speech recognition + speech synthesis), no extra API needed.
 
 ## Setup
 
@@ -34,7 +34,7 @@ npm install
 npm run install:all
 
 cp server/.env.example server/.env
-# edit server/.env and set ANTHROPIC_API_KEY=sk-ant-...
+# edit server/.env and set GEMINI_API_KEY=...
 
 npm run dev
 ```
@@ -42,7 +42,7 @@ npm run dev
 - Client: http://localhost:5173
 - Server: http://localhost:3001
 
-Get an API key from https://console.claude.com. The database is created automatically at `server/data/interviewprep.db`.
+Get a free Gemini API key from Google AI Studio (https://aistudio.google.com). The database is created automatically at `server/data/interviewprep.db`.
 
 ## API
 
@@ -56,8 +56,19 @@ Get an API key from https://console.claude.com. The database is created automati
 | GET | `/api/history` | All past interview attempts |
 | GET | `/api/progress` | Score series + candidate profile |
 
+## Voice-to-voice interviews
+
+Voice mode is on by default in browsers that support it (Chrome and Edge; speech recognition is not available in Firefox, and Safari support is partial):
+
+- The interviewer's replies are spoken aloud.
+- When the interviewer finishes speaking, your microphone opens automatically. Speak your answer; a ~2-second pause sends it — a hands-free loop for the whole interview.
+- Tap the mic to finish early, or the stop button to cancel. "Skip" cuts off a long spoken question (the text stays on screen).
+- Code is always typed: switching to code mode pauses the voice loop, and coding problems are shown on screen rather than read out.
+- Toggle "Voice: off" any time to do a classic typed interview.
+
 ## Notes
 
 - A full run takes roughly 2–3 hours, like a real onsite; the interviewer shortens rounds if you struggle and digs deeper if you excel.
 - Currently single-user by design; the schema (sessions/messages/reports/profile) is ready to grow a `user_id` column for multi-user support.
 - Never commit `server/.env` — it holds your API key.
+- Voice recognition quality depends on your browser and microphone; everything you say is transcribed on-device/by your browser vendor's speech service, not sent to Gemini as audio.

@@ -12,7 +12,7 @@ app.use(express.json({ limit: "2mb" }));
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
 
 app.get("/api/health", (_req, res) => {
-  res.json({ ok: true, apiKeyConfigured: !!process.env.ANTHROPIC_API_KEY });
+  res.json({ ok: true, apiKeyConfigured: !!process.env.GEMINI_API_KEY });
 });
 
 // ---- Resume upload (PDF or plain text) ----

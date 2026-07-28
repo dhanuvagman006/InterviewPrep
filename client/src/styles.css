@@ -167,3 +167,19 @@ button { font-family: var(--body); cursor: pointer; }
   .roundtrack .step { min-width: 33%; }
   .history-row { grid-template-columns: 1fr 1fr; }
 }
+
+/* ---------- voice mode ---------- */
+.voice-deck { display: flex; align-items: center; gap: 16px; padding: 4px 2px; }
+.mic {
+  width: 62px; height: 62px; border-radius: 50%; border: 2px solid var(--ink);
+  background: var(--panel); font-size: 22px; flex-shrink: 0;
+}
+.mic.live { background: var(--red); border-color: var(--red); color: #fff; animation: pulse 1.4s ease-in-out infinite; }
+.mic:disabled { opacity: 0.45; cursor: default; animation: none; }
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(179, 64, 46, 0.35); }
+  50% { box-shadow: 0 0 0 12px rgba(179, 64, 46, 0); }
+}
+.voice-hints { display: flex; flex-direction: column; gap: 2px; font-size: 13.5px; }
+.msg.live { opacity: 0.75; font-style: italic; }
+.btn-mini { border: 1px solid var(--line); background: var(--panel); border-radius: 5px; font-size: 11px; padding: 2px 8px; margin-left: 8px; }
