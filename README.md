@@ -1,75 +1,108 @@
-# InterviewPrep — AI Hiring Simulator
+# InterviewPrep — AI Voice Interview Simulator (Flutter)
 
-An end-to-end software engineering interview simulator. An AI interviewer runs you through the full six-round hiring pipeline of a real company — validating your resume, adapting difficulty to your answers, keeping private evaluation notes, and ending with a hire/no-hire verdict, a detailed report, and a personalized improvement plan. Every interview is recorded so the coach tracks your progress and personalizes future interviews.
+A Flutter app that runs you through the complete six-round hiring process of a software engineering interview — **as a spoken call**. An AI interviewer (Google Gemini) asks questions out loud, listens to your voice answers, probes your resume, adapts difficulty to your performance, keeps private evaluation notes, and ends with a hire/no-hire verdict, a detailed report, and a personalized improvement plan. Every attempt is saved on-device so the coach tracks your progress and personalizes future interviews.
+
+No server needed — the app talks to the Gemini API directly and stores everything locally.
 
 ## The pipeline
 
 1. **Resume validation & HR screening** — walks through every project and skill on your resume and verifies it's genuine.
-2. **Coding assessment** — randomized DSA problems (arrays → backtracking) matched to your level; evaluated on correctness, complexity, code quality, and edge cases.
+2. **Coding assessment** — randomized DSA problems (arrays → backtracking) matched to your level; think aloud by voice, type your code in the built-in editor; evaluated on correctness, complexity, code quality, and edge cases.
 3. **Technical I** — CS fundamentals (DS/Algo, OS, DBMS, networks, OOP, SQL, REST, HTTP, auth, concurrency, memory) with progressively deeper follow-ups.
 4. **Technical II** — your projects, design decisions, trade-offs, and a system design exercise.
 5. **Behavioral** — real stories, with follow-ups whenever answers get vague.
 6. **Hiring manager final** — goals, fit, your questions, and the verdict: Strong Hire / Hire / Borderline / Reject.
 
-Afterward you get a full committee report: overall score, per-round scores, ten skill dimensions, strengths and weaknesses, and an improvement plan that names exactly which questions exposed which weak concepts and what to practice in what order.
+## Voice-to-voice
 
-## How it works
+- Join the interview room and tap **"Join with voice"** — the interviewer greets you and asks the first question aloud.
+- When it finishes speaking, the mic opens automatically. Answer out loud; pausing for ~2 seconds sends your answer. The entire interview is hands-free.
+- The call screen shows a status orb (asking / listening / thinking), captions of the current question, and a live transcript of what it's hearing from you. The full transcript is behind the captions button.
+- Coding problems: the voice says the details are on screen; examples render in a code panel and you type your solution in the code editor.
+- "Skip question audio" cuts off a long question; the voice toggle switches to a typed interview at any time.
+- **Use headphones** — otherwise the mic can pick up the interviewer's own voice.
 
-- **Adaptive interviewer** — every model turn carries the interviewer's running private notes, the log of questions already asked (never repeated), completed-round summaries, and your long-term candidate profile. Difficulty rises and falls with your answers.
-- **Control channel** — the interviewer appends a hidden JSON control block to each reply (notes, question log, round transitions, round scores) which the server parses and strips before you see the message.
-- **Long-term memory** — each report updates a persistent candidate profile (recurring strengths/weaknesses, mastered topics, focus topics, recommended difficulty) that shapes every future interview.
-- **Progress tracking** — the dashboard charts your overall score across interviews and the movement of each skill dimension since your first attempt.
+Voice uses the device's native speech recognition and text-to-speech (via `speech_to_text` and `flutter_tts`), so quality is far better than browser speech APIs and there's no extra API cost.
 
-## Stack
+## After the interview
 
-- **Server:** Node + Express, SQLite (better-sqlite3), Google Gemini API (`gemini-2.5-flash` via REST), PDF resume parsing.
-- **Client:** React + Vite, no UI framework — a custom "evaluation dossier" design system. Voice-to-voice interviews via the browser's Web Speech API (speech recognition + speech synthesis), no extra API needed.
+- **Evaluation report**: overall score /100, stamped verdict, per-round scores, ten skill dimensions, strengths/weaknesses, and an improvement plan naming exactly which questions exposed which weak concepts, with practice order, resources, and short/long-term goals.
+- **History & progress**: every attempt recorded (date, duration, scores, decision); a trend chart of your overall score; per-dimension deltas since your first interview.
+- **Personalized coaching**: each report updates a persistent candidate profile (recurring strengths/weaknesses, mastered topics, focus topics, recommended difficulty) that shapes every future interview — mastered ground is skipped, weak areas get more attention.
 
 ## Setup
+
+Requires the [Flutter SDK](https://docs.flutter.dev/get-started/install) (3.22+).
 
 ```bash
 git clone https://github.com/dhanuvagman006/InterviewPrep.git
 cd InterviewPrep
-npm install
-npm run install:all
 
-cp server/.env.example server/.env
-# edit server/.env and set GEMINI_API_KEY=...
+# Generate the platform scaffolding (android/, ios/, etc.)
+flutter create .
 
-npm run dev
+flutter pub get
 ```
 
-- Client: http://localhost:5173
-- Server: http://localhost:3001
+### Add permissions
 
-Get a free Gemini API key from Google AI Studio (https://aistudio.google.com). The database is created automatically at `server/data/interviewprep.db`.
+**Android** — in `android/app/src/main/AndroidManifest.xml`, inside `<manifest>` (above `<application>`):
 
-## API
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+<queries>
+  <intent>
+    <action android:name="android.speech.RecognitionService" />
+  </intent>
+</queries>
+```
 
-| Method | Route | Purpose |
-| --- | --- | --- |
-| POST | `/api/resume/parse` | Extract text from an uploaded PDF/TXT resume |
-| POST | `/api/interviews` | Start a session (role, difficulty, company style, resume) |
-| POST | `/api/interviews/:id/message` | Send an answer, get the interviewer's reply |
-| POST | `/api/interviews/:id/report` | Generate (or fetch) the final evaluation |
-| GET | `/api/interviews/:id` | Full transcript + report |
-| GET | `/api/history` | All past interview attempts |
-| GET | `/api/progress` | Score series + candidate profile |
+Also set `minSdk = 24` in `android/app/build.gradle(.kts)` if it's lower.
 
-## Voice-to-voice interviews
+**iOS** — in `ios/Runner/Info.plist`, inside the top-level `<dict>`:
 
-The interview runs as a spoken call, not a chat (Chrome and Edge; speech recognition is not available in Firefox, and Safari support is partial):
+```xml
+<key>NSMicrophoneUsageDescription</key>
+<string>The interviewer listens to your spoken answers.</string>
+<key>NSSpeechRecognitionUsageDescription</key>
+<string>Your spoken answers are transcribed for the interview.</string>
+```
 
-- You join through a lobby screen ("Join with voice") — the click unlocks browser audio and grants the microphone, which is why the interviewer can speak first.
-- The interviewer asks every question out loud. When it finishes, your mic opens automatically; speak your answer and a ~2-second pause sends it. The whole interview is hands-free.
-- The screen shows a call-style stage: a status orb (asking / listening / thinking), captions of the current question so you can re-read while answering, and your live transcript line. The full transcript is hidden behind "Show transcript".
-- Coding problems: the spoken audio says the details are on screen, and the examples/constraints render in a code panel. Code itself is typed in the code editor.
-- "Skip question audio" cuts off a long question; "Voice: off" switches to a classic typed interview at any point.
-- Use headphones — otherwise the mic can pick up the interviewer's own voice.
+### Run
+
+```bash
+flutter run
+```
+
+Then in the app: **Settings (gear icon) → paste your Gemini API key** (free at https://aistudio.google.com) → Begin interview. The key is stored only on your device.
+
+## Project structure
+
+```
+lib/
+  main.dart                     # theme ("evaluation dossier" design) + app shell
+  models/session.dart           # session, messages, round summaries, report
+  services/
+    rounds.dart                 # the 6 round definitions + interviewer prompts
+    gemini_service.dart         # Gemini REST client (chat + JSON report mode)
+    interview_engine.dart       # turn handling, hidden control-block parsing,
+                                # round transitions, report generation, profile update
+    voice_service.dart          # native STT (silence auto-send) + TTS
+    storage_service.dart        # on-device persistence (sessions + profile)
+  screens/
+    home_screen.dart            # setup: role, difficulty, resume, settings
+    interview_screen.dart       # the voice call: lobby, orb stage, code editor
+    report_screen.dart          # verdict stamp, dimensions, improvement plan
+    dashboard_screen.dart       # trend chart, history, candidate profile
+```
+
+## How the interviewer stays adaptive
+
+Every model turn carries: the interviewer's running private notes, the log of questions already asked this interview (never repeated), completed-round summaries with scores, and your long-term candidate profile. The interviewer ends each reply with a hidden `<control>` JSON block (new notes, question log entry, round transitions with 0–10 scores) which the engine parses and strips — you only ever hear the conversation.
 
 ## Notes
 
-- A full run takes roughly 2–3 hours, like a real onsite; the interviewer shortens rounds if you struggle and digs deeper if you excel.
-- Currently single-user by design; the schema (sessions/messages/reports/profile) is ready to grow a `user_id` column for multi-user support.
-- Never commit `server/.env` — it holds your API key.
-- Voice recognition quality depends on your browser and microphone; everything you say is transcribed on-device/by your browser vendor's speech service, not sent to Gemini as audio.
+- A full run takes roughly 2–3 hours like a real onsite; the interviewer shortens rounds if you struggle and digs deeper if you excel. You can also leave and the session stays in history.
+- Resume input is pasted text for now (on-device PDF text extraction can be added with the `syncfusion_flutter_pdf` package).
+- Speech recognition needs Google app / speech services on Android and Siri dictation enabled on iOS.
