@@ -24,6 +24,7 @@ class _InterviewScreenState extends State<InterviewScreen> {
   bool _showTranscript = false;
   bool _busy = false;
   bool _complete = false;
+  bool _awaitingSpeech = false; // reply arrived, audio not started yet
   String? _error;
 
   InterviewEngine get engine => widget.engine;
@@ -33,6 +34,9 @@ class _InterviewScreenState extends State<InterviewScreen> {
     super.initState();
     _voice.onStateChanged = () {
       if (mounted) setState(() {});
+    };
+    _voice.onSpeechStart = () {
+      if (mounted) setState(() => _awaitingSpeech = false);
     };
   }
 
@@ -110,7 +114,9 @@ class _InterviewScreenState extends State<InterviewScreen> {
   }
 
   Future<void> _speakThenListen(String message) async {
+    setState(() => _awaitingSpeech = true);
     await _voice.speak(message);
+    if (mounted && _awaitingSpeech) setState(() => _awaitingSpeech = false);
     if (!mounted || !_voiceMode || _codeMode || _complete) return;
     await _voice.listen(onFinal: _onSpokenAnswer);
   }
@@ -156,6 +162,19 @@ class _InterviewScreenState extends State<InterviewScreen> {
       if (m.role == 'assistant') return m.content;
     }
     return null;
+  }
+
+  /// The question text shown on the stage. While the natural voice is still
+  /// being synthesized, keep showing the PREVIOUS question so the new text and
+  /// its audio appear together.
+  String? get _captionText {
+    final assistant =
+        engine.session.messages.where((m) => m.role == 'assistant').toList();
+    if (assistant.isEmpty) return null;
+    final idx = (_awaitingSpeech && _voiceMode && assistant.length >= 2)
+        ? assistant.length - 2
+        : assistant.length - 1;
+    return assistant[idx].content.replaceAll(RegExp(r'```[\s\S]*?```'), '').trim();
   }
 
   String? get _screenCode {
@@ -284,7 +303,9 @@ class _InterviewScreenState extends State<InterviewScreen> {
         ? 'Interview finished'
         : _busy
             ? 'Thinking…'
-            : _voice.speaking
+            : _awaitingSpeech
+                ? 'Asking…'
+                : _voice.speaking
                 ? 'Asking…'
                 : _voice.listening
                     ? 'Listening to you'
@@ -301,9 +322,9 @@ class _InterviewScreenState extends State<InterviewScreen> {
           Text(status.toUpperCase(),
               style: GoogleFonts.jetBrainsMono(color: AppColors.steel, fontSize: 11, letterSpacing: 1.4)),
           const SizedBox(height: 18),
-          if (_lastQuestion != null)
+          if (_captionText != null)
             Text(
-              _lastQuestion!.replaceAll(RegExp(r'```[\s\S]*?```'), '').trim(),
+              _captionText!,
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 16, height: 1.55),
             ),
