@@ -1,19 +1,16 @@
 import 'dart:async';
-import 'dart:typed_data';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'gemini_tts_service.dart';
 
 /// Voice layer for the interview call:
-/// - speak(): reads the interviewer's question aloud (code blocks announced, not read).
+/// - speak(): reads the interviewer's question aloud with the device's built-in
+///   TTS (instant, offline, no API quota). Code blocks are announced, not read.
 /// - listen(): native speech-to-text with a live transcript; ~2.2s of silence after
 ///   real words finalizes the answer, giving a hands-free conversation loop.
 class VoiceService {
   final FlutterTts _tts = FlutterTts();
   final stt.SpeechToText _stt = stt.SpeechToText();
-  final AudioPlayer _player = AudioPlayer();
 
   bool _sttReady = false;
   bool speaking = false;
@@ -51,13 +48,8 @@ class VoiceService {
     return _sttReady;
   }
 
-  /// Speak [text] aloud. Prefers Gemini's natural voice; falls back to the
-  /// device's built-in TTS if that fails (offline, quota, etc.).
-  ///
-  /// Latency: the text is split into sentence chunks and synthesis is
-  /// PIPELINED — the first (short) chunk is synthesized and played right away
-  /// while the following chunks are generated in the background. This cuts
-  /// time-to-first-word to roughly the synthesis time of one sentence.
+  /// Speak [text] aloud using the device's built-in system voice.
+  /// Starts instantly (no network synthesis) and works offline.
   Future<void> speak(String text) async {
     final spoken = text
         .replaceAll(RegExp(r'```[\s\S]*?```'), " I've put the details on your screen. ")
@@ -68,85 +60,17 @@ class VoiceService {
 
     speaking = true;
     onStateChanged?.call();
-    var announcedStart = false;
-    void announce() {
-      if (!announcedStart) {
-        announcedStart = true;
-        onSpeechStart?.call();
-      }
-    }
-
     try {
-      var playedNatural = false;
-      if (await GeminiTtsService.useGemini()) {
-        try {
-          final chunks = _chunkSentences(spoken);
-          // Kick off synthesis of chunk 0; then, while each chunk plays,
-          // synthesize the next one in parallel.
-          Future<Uint8List>? nextSynth = GeminiTtsService.synthesize(chunks[0]);
-          for (var i = 0; i < chunks.length; i++) {
-            final wav = await nextSynth!;
-            if (!speaking) return; // stopSpeaking() while synthesizing
-            nextSynth = i + 1 < chunks.length
-                ? GeminiTtsService.synthesize(chunks[i + 1])
-                : null;
-            announce();
-            await _playWav(wav);
-            if (!speaking) return;
-          }
-          playedNatural = true;
-        } catch (_) {
-          playedNatural = false; // fall through to device TTS
-        }
-      }
-      if (!playedNatural && speaking) {
-        announce();
-        await _tts.speak(spoken); // awaits completion (awaitSpeakCompletion)
-      }
+      onSpeechStart?.call();
+      await _tts.speak(spoken); // awaits completion (awaitSpeakCompletion)
     } finally {
       speaking = false;
       onStateChanged?.call();
     }
   }
 
-  Future<void> _playWav(Uint8List wav) async {
-    final done = Completer<void>();
-    late final StreamSubscription sub;
-    sub = _player.onPlayerComplete.listen((_) {
-      if (!done.isCompleted) done.complete();
-      sub.cancel();
-    });
-    await _player.play(BytesSource(wav));
-    await done.future;
-  }
-
-  /// Split into speakable chunks: the first is a single sentence (fast to
-  /// synthesize), later ones merge sentences up to ~220 chars.
-  List<String> _chunkSentences(String text) {
-    final sentences = RegExp(r'[^.!?]+[.!?]+|\S[^.!?]*$')
-        .allMatches(text)
-        .map((m) => m.group(0)!.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
-    if (sentences.isEmpty) return [text];
-
-    final chunks = <String>[sentences.first];
-    var buf = '';
-    for (final s in sentences.skip(1)) {
-      if (buf.isNotEmpty && (buf.length + s.length) > 220) {
-        chunks.add(buf.trim());
-        buf = s;
-      } else {
-        buf = buf.isEmpty ? s : '$buf $s';
-      }
-    }
-    if (buf.trim().isNotEmpty) chunks.add(buf.trim());
-    return chunks;
-  }
-
   Future<void> stopSpeaking() async {
     speaking = false;
-    await _player.stop();
     await _tts.stop();
     onStateChanged?.call();
   }
@@ -223,7 +147,6 @@ class VoiceService {
 
   void dispose() {
     _silenceTimer?.cancel();
-    _player.dispose();
     _tts.stop();
     _stt.stop();
   }

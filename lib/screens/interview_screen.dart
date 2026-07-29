@@ -164,9 +164,9 @@ class _InterviewScreenState extends State<InterviewScreen> {
     return null;
   }
 
-  /// The question text shown on the stage. While the natural voice is still
-  /// being synthesized, keep showing the PREVIOUS question so the new text and
-  /// its audio appear together.
+  /// The question text shown on the stage. Until the voice actually starts
+  /// speaking, keep showing the PREVIOUS question so the new text and its
+  /// audio appear together.
   String? get _captionText {
     final assistant =
         engine.session.messages.where((m) => m.role == 'assistant').toList();
@@ -272,7 +272,7 @@ class _InterviewScreenState extends State<InterviewScreen> {
                         color: i < session.roundIndex
                             ? AppColors.green
                             : i == session.roundIndex
-                                ? Colors.white
+                                ? AppColors.onInk
                                 : AppColors.steel,
                       ),
                     ),
@@ -334,11 +334,11 @@ class _InterviewScreenState extends State<InterviewScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFF10151A),
+                color: AppColors.codeBg,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(_screenCode!,
-                  style: GoogleFonts.jetBrainsMono(color: const Color(0xFFD7E0E6), fontSize: 12)),
+                  style: GoogleFonts.jetBrainsMono(color: AppColors.codeText, fontSize: 12)),
             ),
           ],
           if (_voice.listening) ...[
@@ -370,13 +370,13 @@ class _InterviewScreenState extends State<InterviewScreen> {
             constraints:
                 BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
             decoration: BoxDecoration(
-              color: isUser ? AppColors.ink : const Color(0xFFF4F6F7),
+              color: isUser ? AppColors.ink : AppColors.codeBg,
               border: Border.all(color: isUser ? AppColors.ink : AppColors.line),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(m.content,
                 style: TextStyle(
-                    color: isUser ? const Color(0xFFF2F4F5) : AppColors.ink, fontSize: 13.5)),
+                    color: isUser ? AppColors.onInk : AppColors.ink, fontSize: 13.5)),
           ),
         );
       },
@@ -394,11 +394,11 @@ class _InterviewScreenState extends State<InterviewScreen> {
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF10151A),
+                color: AppColors.codeBg,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(_screenCode!,
-                  style: GoogleFonts.jetBrainsMono(color: const Color(0xFFD7E0E6), fontSize: 11.5)),
+                  style: GoogleFonts.jetBrainsMono(color: AppColors.codeText, fontSize: 11.5)),
             ),
           Expanded(
             child: TextField(
@@ -406,11 +406,11 @@ class _InterviewScreenState extends State<InterviewScreen> {
               maxLines: null,
               expands: true,
               textAlignVertical: TextAlignVertical.top,
-              style: GoogleFonts.jetBrainsMono(fontSize: 13, color: const Color(0xFFD7E0E6)),
+              style: GoogleFonts.jetBrainsMono(fontSize: 13, color: AppColors.codeText),
               decoration: InputDecoration(
                 hintText: 'Write your solution here…',
                 hintStyle: const TextStyle(color: AppColors.steel),
-                fillColor: const Color(0xFF10151A),
+                fillColor: AppColors.codeBg,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
@@ -542,7 +542,12 @@ class _Orb extends StatelessWidget {
                 : [],
       ),
       child: Icon(icon,
-          size: 38, color: (speaking || listening) ? Colors.white : AppColors.steel),
+          size: 38,
+          color: speaking
+              ? AppColors.onInk
+              : listening
+                  ? Colors.white
+                  : AppColors.steel),
     );
   }
 }

@@ -196,7 +196,7 @@ class _ReportScreenState extends State<ReportScreen> {
                       LinearProgressIndicator(
                         value: ((e.value as num?)?.toDouble() ?? 0) / 10,
                         minHeight: 6,
-                        backgroundColor: const Color(0xFFE2E7E9),
+                        backgroundColor: AppColors.line,
                         color: AppColors.ink,
                         borderRadius: BorderRadius.circular(3),
                       ),

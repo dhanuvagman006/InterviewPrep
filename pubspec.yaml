@@ -19,7 +19,6 @@ dependencies:
   google_fonts: ^6.2.1
   file_picker: ^10.0.0
   syncfusion_flutter_pdf: ^26.1.35
-  audioplayers: ^6.1.0
 
 dev_dependencies:
   flutter_test:

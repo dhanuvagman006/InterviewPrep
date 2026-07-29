@@ -220,7 +220,7 @@ class _TrendPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     const pad = 22.0;
     final gridPaint = Paint()
-      ..color = const Color(0xFFE2E7E9)
+      ..color = AppColors.line
       ..strokeWidth = 1;
     for (final g in [0, 50, 100]) {
       final y = size.height - pad - (g / 100) * (size.height - pad * 2);

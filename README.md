@@ -22,9 +22,11 @@ No server needed — the app talks to the Gemini API directly and stores everyth
 - "Skip question audio" cuts off a long question; the voice toggle switches to a typed interview at any time.
 - **Use headphones** — otherwise the mic can pick up the interviewer's own voice.
 
-**Natural voice:** the interviewer speaks with Gemini's speech-generation model (`gemini-2.5-flash-preview-tts`) using your same API key — pick from six voices (Charon, Kore, Puck, Aoede, Fenrir, Leda) in Settings. If synthesis fails (offline, quota), the app automatically falls back to the device's built-in TTS. You can also choose "Device voice" in Settings for instant, offline (but robotic) speech. Speech recognition is the device's native engine (`speech_to_text`).
+**Voice:** the interviewer speaks with your device's built-in system voice (`flutter_tts`) — instant, offline, and free (no API quota used). Pick or install a different voice in your phone's text-to-speech settings. Speech recognition is the device's native engine (`speech_to_text`).
 
-Note: natural voice adds a short pause before each question while the audio is generated, and TTS calls count against your Gemini API quota.
+## Design
+
+Pure-black AMOLED dark theme throughout — true `#000000` backgrounds so OLED pixels switch off, saving battery and looking sharp on Super AMOLED displays.
 
 ## After the interview
 
