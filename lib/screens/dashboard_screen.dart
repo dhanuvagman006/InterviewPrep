@@ -35,10 +35,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Color _decisionColor(String? d) => switch (d) {
-        'strong_hire' || 'hire' => Ink.green,
-        'borderline' => Ink.amber,
-        'reject' => Ink.red,
-        _ => Ink.steel,
+        'strong_hire' || 'hire' => AppColors.green,
+        'borderline' => AppColors.amber,
+        'reject' => AppColors.red,
+        _ => AppColors.steel,
       };
 
   @override
@@ -52,7 +52,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('HISTORY & PROGRESS')),
       body: sessions == null
-          ? const Center(child: CircularProgressIndicator(color: Ink.ink))
+          ? const Center(child: CircularProgressIndicator(color: AppColors.ink))
           : ListView(
               padding: const EdgeInsets.all(20),
               children: [
@@ -63,7 +63,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     padding: const EdgeInsets.all(16),
                     child: reported.isEmpty
                         ? const Text('Complete an interview to start your trend line.',
-                            style: TextStyle(color: Ink.steel, fontSize: 13))
+                            style: TextStyle(color: AppColors.steel, fontSize: 13))
                         : SizedBox(
                             height: 150,
                             child: CustomPaint(
@@ -87,7 +87,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ? const Text(
                             'After your first completed interview, the coach builds a profile here '
                             'and uses it to personalize every future interview.',
-                            style: TextStyle(color: Ink.steel, fontSize: 13))
+                            style: TextStyle(color: AppColors.steel, fontSize: 13))
                         : Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -111,7 +111,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Padding(
                       padding: EdgeInsets.all(24),
                       child: Text('No interviews yet. Your record starts with the first one.',
-                          style: TextStyle(color: Ink.steel)),
+                          style: TextStyle(color: AppColors.steel)),
                     ),
                   ),
                 for (final s in sessions)
@@ -131,7 +131,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         '${DateFormat('d MMM y, h:mm a').format(s.createdAt)}'
                         '${s.durationMinutes != null ? ' · ${s.durationMinutes} min' : ''}',
                         style:
-                            GoogleFonts.jetBrainsMono(fontSize: 10.5, color: Ink.steel),
+                            GoogleFonts.jetBrainsMono(fontSize: 10.5, color: AppColors.steel),
                       ),
                       trailing: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -161,7 +161,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 if (sessions.isNotEmpty)
                   const Center(
                     child: Text('Long-press an entry to delete it.',
-                        style: TextStyle(color: Ink.steel, fontSize: 11)),
+                        style: TextStyle(color: AppColors.steel, fontSize: 11)),
                   ),
                 const SizedBox(height: 30),
               ],
@@ -175,7 +175,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       padding: const EdgeInsets.only(bottom: 6),
       child: RichText(
         text: TextSpan(
-          style: const TextStyle(color: Ink.ink, fontSize: 13.5, height: 1.4),
+          style: const TextStyle(color: AppColors.ink, fontSize: 13.5, height: 1.4),
           children: [
             TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.w600)),
             TextSpan(text: text.isEmpty ? '—' : text),
@@ -205,7 +205,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Text(
             '${e.key.replaceAll('_', ' ')} ${e.value > 0 ? '+' : ''}${e.value.toStringAsFixed(1)}',
             style: GoogleFonts.jetBrainsMono(
-                fontSize: 11, color: e.value > 0 ? Ink.green : Ink.red),
+                fontSize: 11, color: e.value > 0 ? AppColors.green : AppColors.red),
           ),
       ],
     );
@@ -238,7 +238,7 @@ class _TrendPainter extends CustomPainter {
     }
 
     final linePaint = Paint()
-      ..color = Ink.ink
+      ..color = AppColors.ink
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
     final path = Path()..moveTo(points.first.dx, points.first.dy);
@@ -250,9 +250,9 @@ class _TrendPainter extends CustomPainter {
     for (var i = 0; i < points.length; i++) {
       final decision = reported[i].report!['decision'] as String?;
       final color = switch (decision) {
-        'strong_hire' || 'hire' => Ink.green,
-        'borderline' => Ink.amber,
-        _ => Ink.red,
+        'strong_hire' || 'hire' => AppColors.green,
+        'borderline' => AppColors.amber,
+        _ => AppColors.red,
       };
       canvas.drawCircle(points[i], 4.5, Paint()..color = color);
     }

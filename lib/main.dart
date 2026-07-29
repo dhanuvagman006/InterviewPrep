@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'screens/home_screen.dart';
 
 // "Evaluation dossier" palette
-class Ink {
+class AppColors {
   static const ink = Color(0xFF171D22);
   static const inkSoft = Color(0xFF3C464E);
   static const paper = Color(0xFFEEF1F2);
@@ -26,12 +26,12 @@ class InterviewPrepApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final base = ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: Ink.paper,
+      scaffoldBackgroundColor: AppColors.paper,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: Ink.ink,
-        primary: Ink.ink,
-        surface: Ink.panel,
-        error: Ink.red,
+        seedColor: AppColors.ink,
+        primary: AppColors.ink,
+        surface: AppColors.panel,
+        error: AppColors.red,
       ),
     );
     return MaterialApp(
@@ -40,25 +40,25 @@ class InterviewPrepApp extends StatelessWidget {
       theme: base.copyWith(
         textTheme: GoogleFonts.interTextTheme(base.textTheme).copyWith(
           headlineMedium: GoogleFonts.spaceGrotesk(
-              fontWeight: FontWeight.w700, color: Ink.ink, fontSize: 28, height: 1.15),
+              fontWeight: FontWeight.w700, color: AppColors.ink, fontSize: 28, height: 1.15),
           headlineSmall: GoogleFonts.spaceGrotesk(
-              fontWeight: FontWeight.w600, color: Ink.ink, fontSize: 20),
+              fontWeight: FontWeight.w600, color: AppColors.ink, fontSize: 20),
           titleMedium: GoogleFonts.spaceGrotesk(
-              fontWeight: FontWeight.w600, color: Ink.ink, fontSize: 16),
+              fontWeight: FontWeight.w600, color: AppColors.ink, fontSize: 16),
           labelSmall: GoogleFonts.jetBrainsMono(
-              color: Ink.steel, fontSize: 10.5, letterSpacing: 1.4),
+              color: AppColors.steel, fontSize: 10.5, letterSpacing: 1.4),
         ),
         appBarTheme: AppBarTheme(
-          backgroundColor: Ink.paper,
-          foregroundColor: Ink.ink,
+          backgroundColor: AppColors.paper,
+          foregroundColor: AppColors.ink,
           elevation: 0,
           centerTitle: false,
           titleTextStyle: GoogleFonts.jetBrainsMono(
-              color: Ink.ink, fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: 1),
+              color: AppColors.ink, fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: 1),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Ink.ink,
+            backgroundColor: AppColors.ink,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -67,8 +67,8 @@ class InterviewPrepApp extends StatelessWidget {
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            foregroundColor: Ink.inkSoft,
-            side: const BorderSide(color: Ink.line),
+            foregroundColor: AppColors.inkSoft,
+            side: const BorderSide(color: AppColors.line),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
           ),
         ),
@@ -77,19 +77,19 @@ class InterviewPrepApp extends StatelessWidget {
           fillColor: const Color(0xFFFBFCFC),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(7),
-            borderSide: const BorderSide(color: Ink.line),
+            borderSide: const BorderSide(color: AppColors.line),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(7),
-            borderSide: const BorderSide(color: Ink.line),
+            borderSide: const BorderSide(color: AppColors.line),
           ),
         ),
         cardTheme: CardThemeData(
-          color: Ink.panel,
+          color: AppColors.panel,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
-            side: const BorderSide(color: Ink.line),
+            side: const BorderSide(color: AppColors.line),
           ),
           margin: EdgeInsets.zero,
         ),
@@ -106,6 +106,6 @@ class Eyebrow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         text.toUpperCase(),
-        style: GoogleFonts.jetBrainsMono(color: Ink.steel, fontSize: 10.5, letterSpacing: 1.4),
+        style: GoogleFonts.jetBrainsMono(color: AppColors.steel, fontSize: 10.5, letterSpacing: 1.4),
       );
 }

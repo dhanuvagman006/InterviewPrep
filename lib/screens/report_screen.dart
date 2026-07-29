@@ -51,9 +51,9 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Color _decisionColor(String d) => switch (d) {
-        'strong_hire' || 'hire' => Ink.green,
-        'borderline' => Ink.amber,
-        _ => Ink.red,
+        'strong_hire' || 'hire' => AppColors.green,
+        'borderline' => AppColors.amber,
+        _ => AppColors.red,
       };
 
   @override
@@ -68,7 +68,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('Couldn\'t build the report: $_error',
-                        style: const TextStyle(color: Ink.red)),
+                        style: const TextStyle(color: AppColors.red)),
                     const SizedBox(height: 12),
                     ElevatedButton(onPressed: () { setState(() => _error = null); _load(); },
                         child: const Text('Try again')),
@@ -83,10 +83,10 @@ class _ReportScreenState extends State<ReportScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        CircularProgressIndicator(color: Ink.ink),
+                        CircularProgressIndicator(color: AppColors.ink),
                         SizedBox(height: 16),
                         Text('The hiring committee is writing your evaluation…',
-                            style: TextStyle(color: Ink.steel)),
+                            style: TextStyle(color: AppColors.steel)),
                       ],
                     ),
                   ),
@@ -125,8 +125,8 @@ class _ReportScreenState extends State<ReportScreen> {
                   const Eyebrow('Hiring committee evaluation'),
                   Text('${(r['overall_score'] as num?)?.round() ?? '—'}',
                       style: GoogleFonts.jetBrainsMono(
-                          fontSize: 44, fontWeight: FontWeight.w700, color: Ink.ink)),
-                  const Text('/ 100 overall', style: TextStyle(color: Ink.steel, fontSize: 13)),
+                          fontSize: 44, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                  const Text('/ 100 overall', style: TextStyle(color: AppColors.steel, fontSize: 13)),
                 ],
               ),
               Transform.rotate(
@@ -189,7 +189,7 @@ class _ReportScreenState extends State<ReportScreen> {
                           Text(dimLabel[e.key] ?? e.key, style: const TextStyle(fontSize: 12.5)),
                           Text('${e.value}/10',
                               style:
-                                  GoogleFonts.jetBrainsMono(fontSize: 11, color: Ink.steel)),
+                                  GoogleFonts.jetBrainsMono(fontSize: 11, color: AppColors.steel)),
                         ],
                       ),
                       const SizedBox(height: 3),
@@ -197,7 +197,7 @@ class _ReportScreenState extends State<ReportScreen> {
                         value: ((e.value as num?)?.toDouble() ?? 0) / 10,
                         minHeight: 6,
                         backgroundColor: const Color(0xFFE2E7E9),
-                        color: Ink.ink,
+                        color: AppColors.ink,
                         borderRadius: BorderRadius.circular(3),
                       ),
                     ],
@@ -261,7 +261,7 @@ class _ReportScreenState extends State<ReportScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('•  ', style: TextStyle(color: Ink.steel)),
+                  const Text('•  ', style: TextStyle(color: AppColors.steel)),
                   Expanded(child: Text('$s', style: const TextStyle(fontSize: 13.5))),
                 ],
               ),
@@ -278,7 +278,7 @@ class _ReportScreenState extends State<ReportScreen> {
         children: [
           Text(k.toUpperCase(),
               style: GoogleFonts.jetBrainsMono(
-                  fontSize: 9.5, letterSpacing: 1.2, color: Ink.steel)),
+                  fontSize: 9.5, letterSpacing: 1.2, color: AppColors.steel)),
           const SizedBox(height: 2),
           Text('$v', style: const TextStyle(fontSize: 13.5)),
         ],

@@ -207,7 +207,7 @@ class _InterviewScreenState extends State<InterviewScreen> {
             'your answers — just talk, like a real call. Pausing for a couple of seconds sends '
             'your answer. Coding problems appear on screen, and code is typed.\n\n'
             'Use headphones for the best experience.',
-            style: TextStyle(color: Ink.inkSoft, height: 1.5),
+            style: TextStyle(color: AppColors.inkSoft, height: 1.5),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
@@ -240,8 +240,8 @@ class _InterviewScreenState extends State<InterviewScreen> {
                     margin: const EdgeInsets.symmetric(horizontal: 2),
                     padding: const EdgeInsets.symmetric(vertical: 5),
                     decoration: BoxDecoration(
-                      color: i == session.roundIndex ? Ink.ink : Ink.panel,
-                      border: Border.all(color: Ink.line),
+                      color: i == session.roundIndex ? AppColors.ink : AppColors.panel,
+                      border: Border.all(color: AppColors.line),
                       borderRadius: BorderRadius.circular(5),
                     ),
                     child: Text(
@@ -251,10 +251,10 @@ class _InterviewScreenState extends State<InterviewScreen> {
                       style: GoogleFonts.jetBrainsMono(
                         fontSize: 8.5,
                         color: i < session.roundIndex
-                            ? Ink.green
+                            ? AppColors.green
                             : i == session.roundIndex
                                 ? Colors.white
-                                : Ink.steel,
+                                : AppColors.steel,
                       ),
                     ),
                   ),
@@ -265,7 +265,7 @@ class _InterviewScreenState extends State<InterviewScreen> {
         if (_error != null)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Text(_error!, style: const TextStyle(color: Ink.red, fontSize: 12.5)),
+            child: Text(_error!, style: const TextStyle(color: AppColors.red, fontSize: 12.5)),
           ),
         Expanded(
           child: _codeMode
@@ -299,7 +299,7 @@ class _InterviewScreenState extends State<InterviewScreen> {
           _Orb(speaking: _voice.speaking, listening: _voice.listening, thinking: _busy),
           const SizedBox(height: 12),
           Text(status.toUpperCase(),
-              style: GoogleFonts.jetBrainsMono(color: Ink.steel, fontSize: 11, letterSpacing: 1.4)),
+              style: GoogleFonts.jetBrainsMono(color: AppColors.steel, fontSize: 11, letterSpacing: 1.4)),
           const SizedBox(height: 18),
           if (_lastQuestion != null)
             Text(
@@ -325,7 +325,7 @@ class _InterviewScreenState extends State<InterviewScreen> {
             Text('“${_voice.liveTranscript.isEmpty ? '…' : _voice.liveTranscript}”',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                    fontStyle: FontStyle.italic, color: Ink.inkSoft, fontSize: 14.5)),
+                    fontStyle: FontStyle.italic, color: AppColors.inkSoft, fontSize: 14.5)),
           ],
           const SizedBox(height: 90),
         ],
@@ -349,13 +349,13 @@ class _InterviewScreenState extends State<InterviewScreen> {
             constraints:
                 BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
             decoration: BoxDecoration(
-              color: isUser ? Ink.ink : const Color(0xFFF4F6F7),
-              border: Border.all(color: isUser ? Ink.ink : Ink.line),
+              color: isUser ? AppColors.ink : const Color(0xFFF4F6F7),
+              border: Border.all(color: isUser ? AppColors.ink : AppColors.line),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(m.content,
                 style: TextStyle(
-                    color: isUser ? const Color(0xFFF2F4F5) : Ink.ink, fontSize: 13.5)),
+                    color: isUser ? const Color(0xFFF2F4F5) : AppColors.ink, fontSize: 13.5)),
           ),
         );
       },
@@ -388,7 +388,7 @@ class _InterviewScreenState extends State<InterviewScreen> {
               style: GoogleFonts.jetBrainsMono(fontSize: 13, color: const Color(0xFFD7E0E6)),
               decoration: InputDecoration(
                 hintText: 'Write your solution here…',
-                hintStyle: const TextStyle(color: Ink.steel),
+                hintStyle: const TextStyle(color: AppColors.steel),
                 fillColor: const Color(0xFF10151A),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
@@ -403,8 +403,8 @@ class _InterviewScreenState extends State<InterviewScreen> {
     return Container(
       padding: EdgeInsets.fromLTRB(16, 10, 16, 12 + MediaQuery.of(context).padding.bottom),
       decoration: const BoxDecoration(
-        color: Ink.panel,
-        border: Border(top: BorderSide(color: Ink.line)),
+        color: AppColors.panel,
+        border: Border(top: BorderSide(color: AppColors.line)),
       ),
       child: _complete
           ? ElevatedButton(
@@ -495,10 +495,10 @@ class _Orb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = speaking
-        ? Ink.ink
+        ? AppColors.ink
         : listening
-            ? Ink.red
-            : Ink.panel;
+            ? AppColors.red
+            : AppColors.panel;
     final icon = speaking
         ? Icons.graphic_eq
         : listening
@@ -513,15 +513,15 @@ class _Orb extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: color,
-        border: Border.all(color: listening ? Ink.red : Ink.line, width: 2),
+        border: Border.all(color: listening ? AppColors.red : AppColors.line, width: 2),
         boxShadow: listening
-            ? [BoxShadow(color: Ink.red.withValues(alpha: 0.25), blurRadius: 24, spreadRadius: 6)]
+            ? [BoxShadow(color: AppColors.red.withValues(alpha: 0.25), blurRadius: 24, spreadRadius: 6)]
             : speaking
-                ? [BoxShadow(color: Ink.ink.withValues(alpha: 0.2), blurRadius: 20, spreadRadius: 4)]
+                ? [BoxShadow(color: AppColors.ink.withValues(alpha: 0.2), blurRadius: 20, spreadRadius: 4)]
                 : [],
       ),
       child: Icon(icon,
-          size: 38, color: (speaking || listening) ? Colors.white : Ink.steel),
+          size: 38, color: (speaking || listening) ? Colors.white : AppColors.steel),
     );
   }
 }

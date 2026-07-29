@@ -69,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Text('Settings', style: Theme.of(ctx).textTheme.headlineSmall),
             const SizedBox(height: 4),
             const Text('Get a free key at aistudio.google.com — it stays on this device.',
-                style: TextStyle(color: Ink.steel, fontSize: 13)),
+                style: TextStyle(color: AppColors.steel, fontSize: 13)),
             const SizedBox(height: 16),
             TextField(
               controller: keyCtrl,
@@ -107,10 +107,10 @@ class _HomeScreenState extends State<HomeScreen> {
         title: RichText(
           text: TextSpan(
             style: GoogleFonts.jetBrainsMono(
-                fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: 1, color: Ink.ink),
+                fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: 1, color: AppColors.ink),
             children: const [
               TextSpan(text: 'INTERVIEW'),
-              TextSpan(text: 'PREP', style: TextStyle(color: Ink.green)),
+              TextSpan(text: 'PREP', style: TextStyle(color: AppColors.green)),
             ],
           ),
         ),
@@ -134,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (!_hasKey)
             Card(
               child: ListTile(
-                leading: const Icon(Icons.key_off_outlined, color: Ink.amber),
+                leading: const Icon(Icons.key_off_outlined, color: AppColors.amber),
                 title: const Text('Add your Gemini API key to begin'),
                 subtitle: const Text('Free at aistudio.google.com'),
                 onTap: _openSettings,
@@ -151,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
             'process — asking questions aloud, listening to your answers, probing your resume, '
             'adapting to how you perform, and ending with a hire/no-hire decision plus a concrete '
             'improvement plan.',
-            style: TextStyle(color: Ink.inkSoft, height: 1.5),
+            style: TextStyle(color: AppColors.inkSoft, height: 1.5),
           ),
           const SizedBox(height: 18),
           Card(
@@ -161,10 +161,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ListTile(
                     dense: true,
                     leading: Text('R${i + 1}',
-                        style: GoogleFonts.jetBrainsMono(color: Ink.steel, fontSize: 12)),
+                        style: GoogleFonts.jetBrainsMono(color: AppColors.steel, fontSize: 12)),
                     title: Text(r.title, style: const TextStyle(fontSize: 13.5)),
                     trailing: Text('~${r.minutes}m',
-                        style: GoogleFonts.jetBrainsMono(color: Ink.steel, fontSize: 11)),
+                        style: GoogleFonts.jetBrainsMono(color: AppColors.steel, fontSize: 11)),
                   ),
               ],
             ),
