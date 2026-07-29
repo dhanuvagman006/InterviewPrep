@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../services/interview_engine.dart';
+import '../services/gemini_tts_service.dart';
 import '../services/resume_service.dart';
 import '../services/rounds.dart';
 import 'dashboard_screen.dart';
@@ -80,6 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final keyCtrl = TextEditingController(text: prefs.getString('gemini_api_key') ?? '');
     final modelCtrl =
         TextEditingController(text: prefs.getString('gemini_model') ?? 'gemini-2.5-flash');
+    var voice = prefs.getString('tts_voice') ?? 'Charon';
     if (!mounted) return;
     await showModalBottomSheet(
       context: context,
@@ -106,6 +108,22 @@ class _HomeScreenState extends State<HomeScreen> {
               controller: modelCtrl,
               decoration: const InputDecoration(labelText: 'Model'),
             ),
+            const SizedBox(height: 12),
+            StatefulBuilder(
+              builder: (ctx2, setSheet) => DropdownButtonFormField<String>(
+                value: voice,
+                decoration: const InputDecoration(labelText: 'Interviewer voice'),
+                items: [
+                  for (final e in GeminiTtsService.voices.entries)
+                    DropdownMenuItem(
+                        value: e.key, child: Text('${e.key} — ${e.value}')),
+                  const DropdownMenuItem(
+                      value: 'device',
+                      child: Text('Device voice — robotic but instant & offline')),
+                ],
+                onChanged: (v) => setSheet(() => voice = v ?? 'Charon'),
+              ),
+            ),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
@@ -113,6 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onPressed: () async {
                   await prefs.setString('gemini_api_key', keyCtrl.text.trim());
                   await prefs.setString('gemini_model', modelCtrl.text.trim());
+                  await GeminiTtsService.setVoice(voice);
                   if (ctx.mounted) Navigator.pop(ctx);
                 },
                 child: const Text('Save'),

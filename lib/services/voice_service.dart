@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'gemini_tts_service.dart';
 
 /// Voice layer for the interview call:
 /// - speak(): reads the interviewer's question aloud (code blocks announced, not read).
@@ -10,6 +12,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 class VoiceService {
   final FlutterTts _tts = FlutterTts();
   final stt.SpeechToText _stt = stt.SpeechToText();
+  final AudioPlayer _player = AudioPlayer();
 
   bool _sttReady = false;
   bool speaking = false;
@@ -44,7 +47,9 @@ class VoiceService {
     return _sttReady;
   }
 
-  /// Speak [text] aloud. Code blocks are replaced with a spoken pointer.
+  /// Speak [text] aloud. Prefers Gemini's natural voice; falls back to the
+  /// device's built-in TTS if that fails (offline, quota, etc.).
+  /// Code blocks are replaced with a spoken pointer.
   Future<void> speak(String text) async {
     final spoken = text
         .replaceAll(RegExp(r'```[\s\S]*?```'), " I've put the details on your screen. ")
@@ -56,7 +61,27 @@ class VoiceService {
     speaking = true;
     onStateChanged?.call();
     try {
-      await _tts.speak(spoken); // awaits completion (awaitSpeakCompletion)
+      var playedNatural = false;
+      if (await GeminiTtsService.useGemini()) {
+        try {
+          final wav = await GeminiTtsService.synthesize(spoken);
+          if (!speaking) return; // stopSpeaking() was called while synthesizing
+          final done = Completer<void>();
+          late final StreamSubscription sub;
+          sub = _player.onPlayerComplete.listen((_) {
+            if (!done.isCompleted) done.complete();
+            sub.cancel();
+          });
+          await _player.play(BytesSource(wav));
+          await done.future;
+          playedNatural = true;
+        } catch (_) {
+          playedNatural = false; // fall through to device TTS
+        }
+      }
+      if (!playedNatural && speaking) {
+        await _tts.speak(spoken); // awaits completion (awaitSpeakCompletion)
+      }
     } finally {
       speaking = false;
       onStateChanged?.call();
@@ -64,8 +89,9 @@ class VoiceService {
   }
 
   Future<void> stopSpeaking() async {
-    await _tts.stop();
     speaking = false;
+    await _player.stop();
+    await _tts.stop();
     onStateChanged?.call();
   }
 
@@ -141,6 +167,7 @@ class VoiceService {
 
   void dispose() {
     _silenceTimer?.cancel();
+    _player.dispose();
     _tts.stop();
     _stt.stop();
   }
