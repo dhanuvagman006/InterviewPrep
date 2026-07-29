@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../services/interview_engine.dart';
+import '../services/resume_service.dart';
 import '../services/rounds.dart';
 import 'dashboard_screen.dart';
 import 'interview_screen.dart';
@@ -16,15 +17,39 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _roleCtrl = TextEditingController(text: 'Software Engineer');
   final _companyCtrl = TextEditingController();
-  final _resumeCtrl = TextEditingController();
   String _difficulty = 'intermediate';
   bool _busy = false;
   bool _hasKey = true;
+  StoredResume? _resume;
+  String? _resumeError;
 
   @override
   void initState() {
     super.initState();
     _checkKey();
+    _loadResume();
+  }
+
+  Future<void> _loadResume() async {
+    final r = await ResumeService.load();
+    if (mounted) setState(() => _resume = r);
+  }
+
+  Future<void> _uploadResume() async {
+    setState(() => _resumeError = null);
+    try {
+      final r = await ResumeService.pickAndStore();
+      if (r != null && mounted) setState(() => _resume = r);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _resumeError = e.toString().replaceFirst('Exception: ', ''));
+      }
+    }
+  }
+
+  Future<void> _removeResume() async {
+    await ResumeService.remove();
+    if (mounted) setState(() => _resume = null);
   }
 
   Future<void> _checkKey() async {
@@ -39,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
         difficulty: _difficulty,
         role: _roleCtrl.text.trim().isEmpty ? 'Software Engineer' : _roleCtrl.text.trim(),
         companyStyle: _companyCtrl.text.trim(),
-        resumeText: _resumeCtrl.text.trim(),
+        // Resume comes from the stored upload (ResumeService) automatically.
       );
       if (!mounted) return;
       await Navigator.of(context).push(
@@ -195,17 +220,74 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: _resumeCtrl,
-            maxLines: 7,
-            style: GoogleFonts.jetBrainsMono(fontSize: 12.5),
-            decoration: const InputDecoration(
-              labelText: 'Resume (paste text)',
-              hintText:
-                  'Paste your resume here. The interviewer verifies everything on it.\nLeave empty to describe your background by voice in Round 1.',
-              alignLabelWithHint: true,
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: _resume == null
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Resume', style: TextStyle(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Upload it once — every interview uses it until you replace it. '
+                          'The interviewer verifies everything on it. You can also skip this '
+                          'and describe your background by voice in Round 1.',
+                          style: TextStyle(color: AppColors.steel, fontSize: 12.5, height: 1.4),
+                        ),
+                        const SizedBox(height: 10),
+                        OutlinedButton.icon(
+                          onPressed: _uploadResume,
+                          icon: const Icon(Icons.upload_file, size: 18),
+                          label: const Text('Upload resume (PDF)'),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.description_outlined,
+                                size: 20, color: AppColors.green),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(_resume!.fileName,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontWeight: FontWeight.w600)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'On file since ${_resume!.updatedAt.day}/${_resume!.updatedAt.month}/${_resume!.updatedAt.year} · '
+                          '${_resume!.text.length} characters extracted. '
+                          'The interviewer will use this resume for every interview.',
+                          style: const TextStyle(color: AppColors.steel, fontSize: 12),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            OutlinedButton(
+                                onPressed: _uploadResume, child: const Text('Replace')),
+                            const SizedBox(width: 8),
+                            TextButton(
+                              onPressed: _removeResume,
+                              child: const Text('Remove',
+                                  style: TextStyle(color: AppColors.red)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
             ),
           ),
+          if (_resumeError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(_resumeError!,
+                  style: const TextStyle(color: AppColors.red, fontSize: 12.5)),
+            ),
           const SizedBox(height: 18),
           ElevatedButton.icon(
             onPressed: _busy ? null : _start,

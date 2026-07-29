@@ -104,5 +104,5 @@ Every model turn carries: the interviewer's running private notes, the log of qu
 ## Notes
 
 - A full run takes roughly 2–3 hours like a real onsite; the interviewer shortens rounds if you struggle and digs deeper if you excel. You can also leave and the session stays in history.
-- Resume input is pasted text for now (on-device PDF text extraction can be added with the `syncfusion_flutter_pdf` package).
+- Your resume is uploaded once as a PDF (or .txt); text is extracted on-device and stored locally, and every interview uses it automatically until you Replace or Remove it on the home screen. Scanned/image-only PDFs can't be read — export a text-based PDF.
 - Speech recognition needs Google app / speech services on Android and Siri dictation enabled on iOS.

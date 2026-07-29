@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:uuid/uuid.dart';
 import '../models/session.dart';
 import 'gemini_service.dart';
+import 'resume_service.dart';
 import 'rounds.dart';
 import 'storage_service.dart';
 
@@ -28,13 +29,18 @@ class InterviewEngine {
     String? companyStyle,
     String? resumeText,
   }) async {
+    // Use the stored resume unless an explicit one was passed.
+    var resume = resumeText;
+    if (resume == null || resume.trim().isEmpty) {
+      resume = (await ResumeService.load())?.text;
+    }
     final session = InterviewSession(
       id: const Uuid().v4(),
       createdAt: DateTime.now(),
       difficulty: difficulty,
       role: role,
       companyStyle: companyStyle,
-      resumeText: resumeText,
+      resumeText: resume,
     );
     await StorageService.saveSession(session);
     return InterviewEngine(session);
