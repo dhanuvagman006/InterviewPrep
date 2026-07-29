@@ -58,13 +58,14 @@ Get a free Gemini API key from Google AI Studio (https://aistudio.google.com). T
 
 ## Voice-to-voice interviews
 
-Voice mode is on by default in browsers that support it (Chrome and Edge; speech recognition is not available in Firefox, and Safari support is partial):
+The interview runs as a spoken call, not a chat (Chrome and Edge; speech recognition is not available in Firefox, and Safari support is partial):
 
-- The interviewer's replies are spoken aloud.
-- When the interviewer finishes speaking, your microphone opens automatically. Speak your answer; a ~2-second pause sends it — a hands-free loop for the whole interview.
-- Tap the mic to finish early, or the stop button to cancel. "Skip" cuts off a long spoken question (the text stays on screen).
-- Code is always typed: switching to code mode pauses the voice loop, and coding problems are shown on screen rather than read out.
-- Toggle "Voice: off" any time to do a classic typed interview.
+- You join through a lobby screen ("Join with voice") — the click unlocks browser audio and grants the microphone, which is why the interviewer can speak first.
+- The interviewer asks every question out loud. When it finishes, your mic opens automatically; speak your answer and a ~2-second pause sends it. The whole interview is hands-free.
+- The screen shows a call-style stage: a status orb (asking / listening / thinking), captions of the current question so you can re-read while answering, and your live transcript line. The full transcript is hidden behind "Show transcript".
+- Coding problems: the spoken audio says the details are on screen, and the examples/constraints render in a code panel. Code itself is typed in the code editor.
+- "Skip question audio" cuts off a long question; "Voice: off" switches to a classic typed interview at any point.
+- Use headphones — otherwise the mic can pick up the interviewer's own voice.
 
 ## Notes
 

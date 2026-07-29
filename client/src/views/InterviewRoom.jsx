@@ -9,14 +9,22 @@ function renderContent(text) {
   );
 }
 
+function extractCode(text) {
+  const blocks = [...text.matchAll(/```(?:\w*\n)?([\s\S]*?)```/g)].map((m) => m[1]);
+  return blocks.length ? blocks.join("\n\n") : null;
+}
+
 export default function InterviewRoom({ sessionId, rounds, onFinished }) {
+  const canVoice = voiceSupported();
+  const [phase, setPhase] = useState(canVoice ? "lobby" : "live"); // lobby | live
+  const [voiceMode, setVoiceMode] = useState(canVoice);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [codeMode, setCodeMode] = useState(false);
-  const [voiceMode, setVoiceMode] = useState(voiceSupported());
+  const [showTranscript, setShowTranscript] = useState(false);
   const [roundIndex, setRoundIndex] = useState(0);
   const [notesCount, setNotesCount] = useState(0);
-  const [startedAt] = useState(Date.now());
+  const [startedAt, setStartedAt] = useState(null);
   const [elapsed, setElapsed] = useState(0);
   const [busy, setBusy] = useState(false);
   const [complete, setComplete] = useState(false);
@@ -26,18 +34,20 @@ export default function InterviewRoom({ sessionId, rounds, onFinished }) {
   const codeModeRef = useRef(codeMode);
   codeModeRef.current = codeMode;
 
-  const voice = useVoice({
-    onFinalTranscript: (text) => sendText(text),
-  });
+  const voice = useVoice({ onFinalTranscript: (text) => sendText(text) });
+
+  const lastInterviewer = [...messages].reverse().find((m) => m.role === "assistant");
+  const screenCode = lastInterviewer ? extractCode(lastInterviewer.content) : null;
 
   useEffect(() => {
+    if (!startedAt) return;
     const t = setInterval(() => setElapsed(Math.floor((Date.now() - startedAt) / 60000)), 15000);
     return () => clearInterval(t);
   }, [startedAt]);
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, busy, voice.interim]);
+  }, [messages, busy, voice.interim, showTranscript]);
 
   function handleReply(res) {
     setMessages((m) => [...m, { role: "assistant", content: res.message }]);
@@ -49,7 +59,6 @@ export default function InterviewRoom({ sessionId, rounds, onFinished }) {
       return;
     }
     if (voiceModeRef.current) {
-      // Speak the reply, then open the mic — the hands-free loop.
       voice.speak(res.message, {
         onDone: () => {
           if (voiceModeRef.current && !codeModeRef.current) voice.listen();
@@ -58,21 +67,34 @@ export default function InterviewRoom({ sessionId, rounds, onFinished }) {
     }
   }
 
-  // Interviewer speaks first.
+  async function begin() {
+    setPhase("live");
+    setStartedAt(Date.now());
+    setBusy(true);
+    try {
+      const res = await api.sendMessage(sessionId, null);
+      handleReply(res);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function joinWithVoice() {
+    const ok = await voice.unlock();
+    setVoiceMode(ok);
+    await begin();
+  }
+
+  async function joinTyped() {
+    setVoiceMode(false);
+    await begin();
+  }
+
+  // Non-voice browsers skip the lobby.
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setBusy(true);
-      try {
-        const res = await api.sendMessage(sessionId, null);
-        if (!cancelled) handleReply(res);
-      } finally {
-        if (!cancelled) setBusy(false);
-      }
-    })();
-    return () => { cancelled = true; };
+    if (!canVoice && phase === "live" && messages.length === 0 && !busy) begin();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId]);
+  }, []);
 
   async function sendText(text) {
     if (!text || busy) return;
@@ -84,10 +106,11 @@ export default function InterviewRoom({ sessionId, rounds, onFinished }) {
       const res = await api.sendMessage(sessionId, text);
       handleReply(res);
     } catch (err) {
-      setMessages((m) => [
-        ...m,
-        { role: "assistant", content: "(Connection issue — please resend your last answer.) " + err.message },
-      ]);
+      const msg = "(Connection issue — please repeat your last answer.) " + err.message;
+      setMessages((m) => [...m, { role: "assistant", content: msg }]);
+      if (voiceModeRef.current) voice.speak("Sorry, I lost you for a second. Could you repeat that?", {
+        onDone: () => voiceModeRef.current && !codeModeRef.current && voice.listen(),
+      });
     } finally {
       setBusy(false);
     }
@@ -95,6 +118,7 @@ export default function InterviewRoom({ sessionId, rounds, onFinished }) {
 
   function sendTyped() {
     const text = codeMode ? "```\n" + input.trim() + "\n```" : input.trim();
+    if (!text.replace(/`/g, "").trim()) return;
     sendText(text);
   }
 
@@ -104,8 +128,49 @@ export default function InterviewRoom({ sessionId, rounds, onFinished }) {
     if (!next) {
       voice.stopSpeaking();
       voice.stopListening();
+    } else {
+      voice.unlock().then((ok) => {
+        if (ok && !busy && !voice.speaking) voice.listen();
+      });
     }
   }
+
+  // ---------- lobby ----------
+  if (phase === "lobby") {
+    return (
+      <div className="panel lobby">
+        <span className="eyebrow">Interview room</span>
+        <h1>Your interviewer is ready.</h1>
+        <p>
+          This is a spoken interview. The interviewer will ask you questions out loud and listen to your answers —
+          just talk, the way you would in a real call. Pausing for a couple of seconds sends your answer.
+          Coding problems appear on screen, and code is typed.
+        </p>
+        <div className="lobby-actions">
+          <button className="btn-primary" onClick={joinWithVoice}>
+            🎙 Join with voice
+          </button>
+          <button className="btn-ghost" onClick={joinTyped}>
+            Join as a typed interview instead
+          </button>
+        </div>
+        <p className="hint">Joining asks for microphone permission. Use headphones if you can — it keeps the interviewer from hearing itself.</p>
+      </div>
+    );
+  }
+
+  // ---------- live ----------
+  const status = complete
+    ? "Interview finished"
+    : busy
+    ? "Thinking…"
+    : voice.speaking
+    ? "Asking…"
+    : voice.listening
+    ? "Listening to you"
+    : voiceMode && !codeMode
+    ? "Waiting — tap the mic to answer"
+    : "Your turn";
 
   return (
     <div>
@@ -118,83 +183,104 @@ export default function InterviewRoom({ sessionId, rounds, onFinished }) {
       </div>
 
       <div className="room">
-        <div className="panel chat">
-          <div className="chat-log" ref={logRef}>
-            {messages.map((m, i) => (
-              <div key={i} className={"msg " + (m.role === "user" ? "candidate" : "interviewer")}>
-                <span className="who">{m.role === "user" ? "You" : "Interviewer"}</span>
-                {renderContent(m.content)}
+        <div className="panel stage-wrap">
+          {voiceMode && !codeMode ? (
+            <div className="stage" aria-live="polite">
+              <div className={"orb " + (voice.speaking ? "speaking" : voice.listening ? "listening" : busy ? "thinking" : "")}>
+                <span>{voice.speaking ? "🗣" : voice.listening ? "🎙" : busy ? "…" : "●"}</span>
               </div>
-            ))}
-            {voice.listening && (
-              <div className="msg candidate live">
-                <span className="who">You — speaking</span>
-                {voice.interim || "…"}
-              </div>
-            )}
-          </div>
-          {busy && <div className="typing">Interviewer is thinking…</div>}
-          {voice.speaking && <div className="typing">🔊 Interviewer is speaking… <button className="btn-mini" onClick={() => { voice.stopSpeaking(); if (voiceMode && !codeMode) voice.listen(); }}>Skip</button></div>}
+              <div className="stage-status">{status}</div>
 
-          {complete ? (
-            <div className="composer">
-              <button className="btn-primary" onClick={onFinished}>
-                Interview finished — view your evaluation
-              </button>
-            </div>
-          ) : (
-            <div className="composer">
-              {voiceMode && !codeMode ? (
-                <div className="voice-deck">
-                  <button
-                    className={"mic " + (voice.listening ? "live" : "")}
-                    onClick={() => (voice.listening ? voice.finishUtterance() : voice.listen())}
-                    disabled={busy || voice.speaking}
-                    aria-label={voice.listening ? "Finish answer and send" : "Start speaking"}
-                  >
-                    {voice.listening ? "■" : "🎙"}
-                  </button>
-                  <div className="voice-hints">
-                    <strong>{voice.listening ? "Listening — pause to send, or tap to finish" : voice.speaking ? "Interviewer speaking…" : busy ? "Waiting for interviewer…" : "Tap the mic and answer out loud"}</strong>
-                    <span className="hint">Answers send automatically after a short pause. Prefer typing? Switch modes below.</span>
-                  </div>
-                </div>
-              ) : (
-                <textarea
-                  className={codeMode ? "code-mode" : ""}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey && !codeMode) {
-                      e.preventDefault();
-                      sendTyped();
-                    }
-                  }}
-                  placeholder={codeMode ? "Write your solution here…" : "Answer the interviewer… (Enter to send, Shift+Enter for a new line)"}
-                  aria-label="Your answer"
-                />
+              {/* Captions: the current question, so you can re-read while answering */}
+              {lastInterviewer && (
+                <div className="caption">{lastInterviewer.content.replace(/```[\s\S]*?```/g, "").trim()}</div>
               )}
-              <div className="composer-row">
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button className="btn-ghost" onClick={() => setCodeMode(!codeMode)}>
-                    {codeMode ? "Leave code mode" : "Code mode"}
-                  </button>
-                  {voiceSupported() ? (
-                    <button className="btn-ghost" onClick={toggleVoiceMode}>
-                      {voiceMode ? "Voice: on" : "Voice: off"}
-                    </button>
-                  ) : (
-                    <span className="hint" style={{ alignSelf: "center" }}>
-                      Voice needs Chrome or Edge
-                    </span>
-                  )}
-                </div>
-                {(!voiceMode || codeMode) && (
-                  <button className="btn-primary" onClick={sendTyped} disabled={busy || !input.trim()}>
-                    Send
+              {screenCode && (
+                <pre className="screen-code" aria-label="Problem details">{screenCode}</pre>
+              )}
+              {voice.listening && <div className="you-line">“{voice.interim || "…"}”</div>}
+
+              <div className="stage-controls">
+                {voice.speaking && (
+                  <button className="btn-ghost" onClick={() => { voice.stopSpeaking(); if (!codeMode) voice.listen(); }}>
+                    Skip question audio
                   </button>
                 )}
+                {voice.listening ? (
+                  <button className="btn-primary" onClick={voice.finishUtterance}>Done — send answer</button>
+                ) : (
+                  !busy && !voice.speaking && !complete && (
+                    <button className="btn-primary" onClick={voice.listen}>🎙 Answer</button>
+                  )
+                )}
+                {complete && (
+                  <button className="btn-primary" onClick={onFinished}>View your evaluation</button>
+                )}
               </div>
+            </div>
+          ) : (
+            <div className="chat">
+              <div className="chat-log" ref={logRef} style={{ minHeight: "40vh" }}>
+                {messages.map((m, i) => (
+                  <div key={i} className={"msg " + (m.role === "user" ? "candidate" : "interviewer")}>
+                    <span className="who">{m.role === "user" ? "You" : "Interviewer"}</span>
+                    {renderContent(m.content)}
+                  </div>
+                ))}
+              </div>
+              {busy && <div className="typing">Interviewer is thinking…</div>}
+              {complete ? (
+                <div className="composer">
+                  <button className="btn-primary" onClick={onFinished}>Interview finished — view your evaluation</button>
+                </div>
+              ) : (
+                <div className="composer">
+                  <textarea
+                    className={codeMode ? "code-mode" : ""}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey && !codeMode) {
+                        e.preventDefault();
+                        sendTyped();
+                      }
+                    }}
+                    placeholder={codeMode ? "Write your solution here, then submit…" : "Type your answer…"}
+                    aria-label="Your answer"
+                  />
+                  <div className="composer-row">
+                    <span />
+                    <button className="btn-primary" onClick={sendTyped} disabled={busy || !input.trim()}>
+                      {codeMode ? "Submit code" : "Send"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="modebar">
+            <button className="btn-ghost" onClick={() => setCodeMode(!codeMode)}>
+              {codeMode ? "← Back to conversation" : "Open code editor"}
+            </button>
+            {canVoice && (
+              <button className="btn-ghost" onClick={toggleVoiceMode}>
+                {voiceMode ? "Voice: on" : "Voice: off"}
+              </button>
+            )}
+            <button className="btn-ghost" onClick={() => setShowTranscript(!showTranscript)}>
+              {showTranscript ? "Hide transcript" : "Show transcript"}
+            </button>
+          </div>
+
+          {showTranscript && voiceMode && !codeMode && (
+            <div className="transcript" ref={logRef}>
+              {messages.map((m, i) => (
+                <div key={i} className={"msg " + (m.role === "user" ? "candidate" : "interviewer")}>
+                  <span className="who">{m.role === "user" ? "You" : "Interviewer"}</span>
+                  {renderContent(m.content)}
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -209,9 +295,8 @@ export default function InterviewRoom({ sessionId, rounds, onFinished }) {
             <span>MODE — {codeMode ? "CODE" : voiceMode ? "VOICE" : "TEXT"}</span>
           </div>
           <div className="scratch">
-            The interviewer is keeping private notes on every answer. You'll see all of them, scored and
-            explained, in your final evaluation. Speak naturally — pauses end your answer, and code is always
-            typed in code mode.
+            Speak naturally — a two-second pause sends your answer. The interviewer keeps private notes on every
+            answer; you'll see all of them, scored and explained, in your final evaluation.
           </div>
         </aside>
       </div>
